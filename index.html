@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="🎂 入單工具">
+    <title>Gateau Omakase - 一鍵入單工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+        
+        .container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+            width: 100%;
+            max-width: 500px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .logo {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        h1 {
+            color: #1c1e21;
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .subtitle {
+            color: #65676b;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+        
+        .info-box {
+            background-color: #f0f2f5;
+            border-left: 4px solid #667eea;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            font-size: 0.85rem;
+            color: #65676b;
+            line-height: 1.6;
+        }
+        
+        textarea {
+            width: 100%;
+            height: 250px;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1rem;
+            resize: none;
+            box-sizing: border-box;
+            margin-bottom: 1rem;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+            transition: border-color 0.3s;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-bottom: 1rem;
+        }
+        
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+        }
+        
+        button:active:not(:disabled) {
+            transform: translateY(0);
+        }
+        
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        #status {
+            text-align: center;
+            font-size: 0.95rem;
+            min-height: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .success {
+            color: #28a745;
+            font-weight: 600;
+        }
+        
+        .error {
+            color: #dc3545;
+            font-weight: 600;
+        }
+        
+        .footer {
+            text-align: center;
+            font-size: 0.8rem;
+            color: #bcc0c4;
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e5e7eb;
+        }
+        
+        .webhook-status {
+            display: inline-block;
+            background-color: #e7f3ff;
+            color: #0066cc;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin-top: 1rem;
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                padding: 1.5rem;
+            }
+            
+            h1 {
+                font-size: 1.3rem;
+            }
+            
+            .logo {
+                font-size: 2.5rem;
+            }
+            
+            textarea {
+                height: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <div class="logo">🎂</div>
+        <h1>Gateau Omakase</h1>
+        <div class="subtitle">一鍵入單工具</div>
+    </div>
+    
+    <div class="info-box">
+        ✨ 將 WhatsApp 訂單訊息貼入下方框框，系統會自動幫你入單到 Google Sheets 同日曆！
+    </div>
+    
+    <textarea id="orderText" placeholder="在此貼上 WhatsApp 訂單訊息...
+例如：
+【Gateau Omakase 訂單確認】
+
+1. 入數日期：2026/04/01
+2. 客人名稱：..."></textarea>
+    
+    <button id="submitBtn" onclick="sendOrder()">📤 解析並傳送訂單</button>
+    
+    <div id="status"></div>
+    
+    <div class="webhook-status">
+        ✅ 系統已連接
+    </div>
+    
+    <div class="footer">
+        <p>由 Manus 自動化系統提供支持</p>
+    </div>
+</div>
+
+<script>
+    async function sendOrder() {
+        const orderText = document.getElementById('orderText').value;
+        const btn = document.getElementById('submitBtn');
+        const status = document.getElementById('status');
+        
+        if (!orderText.trim()) {
+            status.innerText = "❌ 請先貼上訂單訊息！";
+            status.className = "error";
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerText = "傳送中...";
+        status.innerText = "";
+
+        const webhookUrl = 'https://hook.us2.make.com/2ghkfwumhon0qkpv66gdf9xwtvgzpd95';
+
+        try {
+            const response = await fetch(webhookUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ message: orderText })
+            });
+
+            if (response.ok) {
+                status.innerText = "✅ 傳送成功！訂單已入到 Google Sheets，請稍候系統自動同步...";
+                status.className = "success";
+                document.getElementById('orderText').value = "";
+            } else {
+                throw new Error('傳送失敗');
+            }
+        } catch (error) {
+            status.innerText = "❌ 傳送出錯，請檢查網絡連接或稍後重試。";
+            status.className = "error";
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "📤 解析並傳送訂單";
+        }
+    }
+</script>
+
+</body>
+</html>
